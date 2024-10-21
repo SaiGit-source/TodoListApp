@@ -1,6 +1,5 @@
 // all we are saying is function called as App and export as default
 
-import "./styles.css"
 /* here empty tag or we could use 'div' */ 
 /* in react we can return only one element form or h1 both are not possible. so wrap it in a 'div' or fragment empty <></> */
 // to make things interactive, we need to use hooks or something called as state
@@ -12,55 +11,78 @@ import "./styles.css"
 // onSubmit event listener for the Add button
 // e.preventFefault() will stop page from refreshing
 // create brand new todo and add to our list
+// todos default is an empty array, then i add elements with setTodos
+// function toggleTodo i take id and completed as input and i make sure id in todo list matches then i return new completed value
+// () => deleteTodo(todo.id) this is calling a function but deleteTodo(todo.id) returning a value doesn't work
+// we got to break into different components to manage them
+// setTodos is required for both functions 
+// useEffect says run this function every time this function runs
+// so whenever todos changes it will run the function  
+/* useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos))
+  }, [todos])
+  */
+// this function localStorage.setItem is taking todos and storing in local storage
+// localStorage.setItem
+// it is pulling data out from localstorage localStorage.getItem("ITEMS") so faster
 
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { NewTodoForm } from "./NewTodoForm"
+import { TodoList } from "./TodoList"
+import "./styles.css"
+
 
 export default function App(){
-  const [newItem, setNewItem] = useState("")
-  const [todos, setTodos] = useState([])
 
-  function handleSubmit(e){
-    e.preventDefault()
-    setTodos([...todos, 
-      { id: crypto.randomUUID, title: newItem, completed: false},
-    ])
+  const [todos, setTodos] = useState(() => {
+    const localValue = localStorage.getItem("ITEMS")
+    if (localValue == null) return []
+
+    return JSON.parse(localValue)
+  })
+
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos))
+  }, [todos])
+
+  function addTodo(title){
+    setTodos(currentTodos => {
+      return [
+        ...currentTodos, 
+      { id: crypto.randomUUID(), title, completed: false},
+      ]
+    })
+}
+
+  function toggleTodo(id, completed) {
+    setTodos(currentTodos => {
+      return currentTodos.map(todo => {
+        if (todo.id === id) {
+          return { ...todo, completed }
+        }
+
+        return todo
+      })
+    })
   }
+
+  function deleteTodo(id) {
+    setTodos(currentTodos => {
+      return currentTodos.filter(todo => todo.id !== id)
+    })
+  }
+
 
   console.log(todos)
   
+  // props addTodo calls a function {addTodo}
 
   return  (
   <> 
-  <form onSubmit={handleSubmit} className="new-item-form">
-    <div className="form-row">
-      <label htmlFor="item">New Item</label>
-      <input value={newItem} 
-      onChange={e => setNewItem(e.target.value)} 
-      type="text" 
-      id="item"/>
-    </div>
-    <button className="btn">Add</button>
-  </form>
-
+  <NewTodoForm onSubmit = {addTodo}/> 
   <h1 className="header">Todo List</h1>
-  <ul className="list">
-    <li>
-      <label>
-        <input type="checkbox" />
-        Item 1
-      </label>
-      <button className="btn bth-danger">Delete</button>
-    </li>
-    <li>
-      <label>
-        <input type="checkbox" />
-        Item 2
-      </label>
-      <button className="btn bth-danger">Delete</button>
-    </li>
-
-  </ul>
+  <TodoList todos={todos} toggleTodo={toggleTodo} deleteTodo={deleteTodo} />
   </>
   )
 }
